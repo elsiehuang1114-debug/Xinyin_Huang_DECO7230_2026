@@ -1,0 +1,219 @@
+#Podcast workflow
+                     Podcast Hub
+                 (Main Lobby / Home)
+
+      🚪 AI
+      🚪 Crime
+      🚪 Business
+      ❤️ Like List
+
+             │
+      Push open a Topic Door
+
+             ▼
+
+        Topic Selection Space
+
+ ┌────────────────────────────┐
+ │ GPT Weekly                 │
+ │ AI Today                   │
+ │ Future Tech                │
+ │ AI Research                │
+ └────────────────────────────┘
+      Swipe to browse episodes
+
+             │
+      Select an Episode
+
+             ▼
+
+      Elevator Transition
+ (Scene rapidly moves upward,
+ like taking an elevator)
+
+             ▼
+
+        Chapter Corridor
+
+ 🛗 Elevator              📦 Like Box
+
+ 🚪 Intro
+ 🚪 Chapter 1
+ 🚪 Chapter 2
+ 🚪 Ending
+
+             │
+        Push Open Door
+
+             ▼
+
+         Listening Space
+
+ Floating subtitles
+ Immersive environment
+ (Beach / Space / Forest / etc.)
+
+
+# Podcast World: User Journey
+
+## Step 1 — Enter the Podcast Hub
+
+Users begin in the **Podcast Hub**, which acts as the main lobby.
+
+Different podcast topics appear as large interactive doors.
+
+**Available Topics:**
+- 🚪 AI
+- 🚪 Crime
+- 🚪 Business
+- ❤️ Like List
+
+### Interaction
+Instead of clicking icons, users physically walk to a topic and **push open the door** to enter.
+
+---
+
+## Step 2 — Browse Episodes
+
+After entering a topic, users arrive at the **Topic Selection Space**.
+
+A floating horizontal episode panel appears in front of them, displaying podcast episodes within the selected topic.
+
+### Interaction
+Users can:
+- Swipe left or right to browse episodes.
+- Tap/select an episode to continue.
+
+---
+
+## Step 3 — Elevator Transition
+
+Once an episode is selected, the environment transforms instead of loading a new screen.
+
+Users experience an **elevator-like transition**, where the environment rapidly moves upward before arriving at the selected podcast.
+
+### Purpose
+- Creates a smooth transition between spaces.
+- Enhances immersion while maintaining spatial continuity.
+
+---
+
+## Step 4 — Explore the Chapter Corridor
+
+Each podcast episode is represented as a **Chapter Corridor**.
+
+Every chapter becomes a physical door.
+
+**Example Chapters**
+- 🚪 Intro
+- 🚪 Chapter 1
+- 🚪 Chapter 2
+- 🚪 Ending
+
+### Interaction
+Users physically walk to the desired chapter and **push open the door** to begin listening.
+
+This replaces the traditional podcast timeline with a spatial navigation experience.
+
+---
+
+## Step 5 — Listening Space
+
+After opening a chapter door, users enter the **Listening Space**.
+
+The interface is intentionally minimal to reduce distractions.
+
+### Features
+- Floating subtitles appear naturally in front of the user.
+- The listening environment can be personalised.
+
+### Available Environments
+- 🌊 Beach
+- 🌌 Space
+- 🌲 Forest
+- ☕ Coffee Shop
+- 🏔 Mountains
+
+The environment becomes part of the podcast experience rather than simply displaying audio controls.
+
+---
+
+# Core XR Interactions
+
+## 1. Push Door Interaction
+
+### Purpose
+Navigate between podcast topics and podcast chapters.
+
+### Interaction
+Users physically **push open doors** instead of tapping buttons.
+
+---
+
+## 2. Swipe Episode Panel
+
+### Purpose
+Browse podcast episodes within the selected topic.
+
+### Interaction
+Users swipe a floating horizontal panel to scroll through available episodes.
+
+---
+
+## 3. Elevator Navigation
+
+### Purpose
+Provide fast navigation while maintaining immersion.
+
+### Interaction
+A floating elevator panel attached to the user's **right hand** allows users to:
+
+- Jump directly to any chapter
+- Return to the **Ground Floor (Podcast Hub)**
+
+This reduces unnecessary walking while preserving the spatial navigation concept.
+
+---
+
+## 4. Like Box
+
+### Purpose
+Save favourite podcasts.
+
+### Interaction
+A floating **Like Box** follows the user's **left hand**.
+
+When users enjoy a podcast:
+
+1. Grab the podcast cover.
+2. Drop it into the Like Box.
+
+The saved podcast is automatically added to the **Like List** inside the Podcast Hub.
+
+---
+
+## 5. Immersive Listening Environment
+
+### Purpose
+Increase presence and personalisation.
+
+### Interaction
+Users can customise the listening environment while floating subtitles remain visible in front of them.
+
+### Available Environments
+- 🌊 Beach
+- 🌌 Space
+- 🌲 Forest
+- ☕ Coffee Shop
+
+---
+
+# Interaction Summary
+
+| Space | Main Interaction |
+|--------|------------------|
+| **Podcast Hub** | Push a topic door |
+| **Topic Selection Space** | Swipe the floating episode panel |
+| **Elevator Transition** | Press elevator buttons |
+| **Chapter Corridor** | Push chapter doors |
+| **Listening Space** | Grab podcast cover to the Like Box / Customise the environment |
