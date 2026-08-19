@@ -17,6 +17,9 @@ public class EpisodeManager : MonoBehaviour
     public TMP_Text durationText;
     public Renderer coverRenderer;
 
+    public Transform player;
+    public Transform chapterTarget;
+
     private int currentIndex = 0;
 
     void Start()
@@ -51,6 +54,14 @@ public class EpisodeManager : MonoBehaviour
     public void SelectCurrentEpisode()
     {
         Debug.Log("Selected Episode: " + episodes[currentIndex].title);
+
+        if (player != null && chapterTarget != null)
+        {
+            player.SetPositionAndRotation(
+                chapterTarget.position,
+                chapterTarget.rotation
+            );
+        }
     }
     
     void ShowEpisode()
