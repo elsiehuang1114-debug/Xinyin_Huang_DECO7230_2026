@@ -48,6 +48,11 @@ public class EpisodeManager : MonoBehaviour
         ShowEpisode();
     }
 
+    public void SelectCurrentEpisode()
+    {
+        Debug.Log("Selected Episode: " + episodes[currentIndex].title);
+    }
+    
     void ShowEpisode()
     {
         if (episodes.Length == 0) return;
