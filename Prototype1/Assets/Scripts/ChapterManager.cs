@@ -42,4 +42,12 @@ public class ChapterManager : MonoBehaviour
     {
         return currentChapterIndex;
     }
+
+    public string GetCurrentChapterTitle()
+    {
+        if (chapters == null || chapters.Length == 0)
+            return "";
+
+        return chapters[currentChapterIndex].title;
+    }
 }

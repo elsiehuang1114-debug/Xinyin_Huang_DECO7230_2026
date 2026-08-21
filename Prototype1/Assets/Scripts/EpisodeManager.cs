@@ -19,6 +19,7 @@ public class EpisodeManager : MonoBehaviour
 
     public Transform player;
     public Transform chapterTarget;
+    public GameObject navigationPanel;
 
     private int currentIndex = 0;
 
@@ -61,6 +62,11 @@ public class EpisodeManager : MonoBehaviour
                 chapterTarget.position,
                 chapterTarget.rotation
             );
+        }
+
+        if (navigationPanel != null)
+        {
+            navigationPanel.SetActive(true);
         }
     }
     
