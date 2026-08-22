@@ -6,13 +6,23 @@ public class HeartDrag : MonoBehaviour
     private bool isDragging = false;
     private float dragDistance;
 
+    private Vector3 startPosition;
+
+    public Transform snapPoint;
+
+    private bool isFavourite = false;
+
     void Start()
     {
         mainCamera = Camera.main;
+        startPosition = transform.position;
     }
 
     void OnMouseDown()
     {
+        if (isFavourite)
+            return;
+
         if (mainCamera == null)
             return;
 
@@ -40,5 +50,30 @@ public class HeartDrag : MonoBehaviour
     void OnMouseUp()
     {
         isDragging = false;
+
+        if (!isFavourite)
+        {
+            transform.position = startPosition;
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (isFavourite)
+            return;
+
+        if (other.CompareTag("FavouriteArea"))
+        {
+            isFavourite = true;
+            isDragging = false;
+
+            if (snapPoint != null)
+            {
+                transform.position = snapPoint.position;
+                transform.rotation = snapPoint.rotation;
+            }
+
+            Debug.Log("Podcast added to favourites!");
+        }
     }
 }
