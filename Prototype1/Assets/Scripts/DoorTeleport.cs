@@ -37,6 +37,12 @@ public class DoorTeleport : MonoBehaviour
             );
         }
 
+        // Teleport 后自动关门
+        if (doorController != null)
+        {
+            doorController.CloseDoor();
+        }
+
         isTeleporting = false;
     }
 }

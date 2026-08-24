@@ -62,6 +62,9 @@ public class HeartDrag : MonoBehaviour
         if (isFavourite)
             return;
 
+        if (!isDragging)
+            return;
+
         if (other.CompareTag("FavouriteArea"))
         {
             isFavourite = true;
