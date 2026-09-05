@@ -1,48 +1,39 @@
 using UnityEngine;
-using System.Collections;
+using UnityEngine.InputSystem;
 
 public class DoorTeleport : MonoBehaviour
 {
     public DoorController doorController;
-    public Transform player;
-    public Transform teleportTarget;
-    public float delay = 0.3f;
 
-    private bool isTeleporting = false;
+    private bool playerNearby = false;
 
-    private void OnMouseDown()
+    void Update()
     {
-        if (!isTeleporting)
+        if (playerNearby &&
+            Keyboard.current != null &&
+            Keyboard.current.eKey.wasPressedThisFrame)
         {
-            StartCoroutine(OpenAndTeleport());
+            if (doorController != null)
+            {
+                doorController.ToggleDoor();
+            }
         }
     }
 
-    private IEnumerator OpenAndTeleport()
+    private void OnTriggerEnter(Collider other)
     {
-        isTeleporting = true;
-
-        if (doorController != null)
+        if (other.CompareTag("Player"))
         {
-            doorController.ToggleDoor();
+            playerNearby = true;
+            Debug.Log("Player near door - Press E");
         }
+    }
 
-        yield return new WaitForSeconds(delay);
-
-        if (player != null && teleportTarget != null)
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
         {
-            player.SetPositionAndRotation(
-                teleportTarget.position,
-                teleportTarget.rotation
-            );
+            playerNearby = false;
         }
-
-        // Teleport 后自动关门
-        if (doorController != null)
-        {
-            doorController.CloseDoor();
-        }
-
-        isTeleporting = false;
     }
 }
