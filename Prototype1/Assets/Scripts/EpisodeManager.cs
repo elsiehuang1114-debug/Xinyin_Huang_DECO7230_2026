@@ -23,6 +23,23 @@ public class EpisodeManager : MonoBehaviour
 
     private int currentIndex = 0;
 
+    /// <summary>Fired at the end of ShowEpisode so listeners can refresh carousel visuals.</summary>
+    public System.Action OnEpisodeChanged;
+
+    /// <summary>Read-only access to the current index for the carousel.</summary>
+    public int CurrentIndex => currentIndex;
+
+    /// <summary>Total number of episodes (0 if array is null).</summary>
+    public int EpisodeCount => episodes == null ? 0 : episodes.Length;
+
+    /// <summary>Safe modulo access: returns null if episodes is empty.</summary>
+    public EpisodeData GetEpisode(int i)
+    {
+        if (episodes == null || episodes.Length == 0) return null;
+        int idx = ((i % episodes.Length) + episodes.Length) % episodes.Length;
+        return episodes[idx];
+    }
+
     void Start()
     {
         ShowEpisode();
@@ -81,5 +98,7 @@ public class EpisodeManager : MonoBehaviour
         {
             coverRenderer.material = episodes[currentIndex].coverMaterial;
         }
+
+        OnEpisodeChanged?.Invoke();
     }
 }
