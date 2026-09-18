@@ -27,9 +27,9 @@ public class ChapterStation : MonoBehaviour
     [Header("Visual Highlight")]
     [Tooltip("Renderer whose material color is driven by highlight state.")]
     [SerializeField] private Renderer _stationRenderer;
-    [SerializeField] private Color _normalColor   = Color.white;
-    [SerializeField] private Color _proximityColor = new Color(0.4f, 0.8f, 1f, 1f);  // soft blue
-    [SerializeField] private Color _selectedColor  = new Color(0.3f, 1f, 0.5f, 1f);  // soft green
+    [SerializeField] private Color _normalColor   = new Color(0.4196f, 0.4863f, 0.5765f, 1f); // #6B7C93 Bright/desaturated blue-grey
+    [SerializeField] private Color _proximityColor = new Color(0.6078f, 0.4863f, 0.9412f, 1f); // #9B7CF0 Clear bright purple
+    [SerializeField] private Color _selectedColor  = new Color(0.1804f, 0.8000f, 0.4431f, 1f); // #2ECC71 Bright green
 
     // Runtime state
     private Material _material;     // per-instance copy so we don't tint shared materials
@@ -74,6 +74,20 @@ public class ChapterStation : MonoBehaviour
 
         if (_controller != null)
             _controller.SetSelected(this);                // enforce single-selection highlight
+    }
+
+    /// <summary>Controller / ray / mouse hover preview.</summary>
+    void OnMouseEnter()
+    {
+        _isNearby = true;
+        UpdateVisual();
+    }
+
+    /// <summary>Controller / ray / mouse leaves hover.</summary>
+    void OnMouseExit()
+    {
+        _isNearby = false;
+        UpdateVisual();
     }
 
     /// <summary>Player enters proximity → preview highlight only, never selects.</summary>
