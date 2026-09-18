@@ -1,10 +1,11 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Desktop swipe detector for the podcast carousel.
-/// Detects horizontal mouse drag and Left/Right arrow keys, then calls PodcastCarousel.Swipe().
-/// Thin layer: replace or supplement with an XR hand-tracking driver later
-/// by calling PodcastCarousel.Swipe() directly — no changes to carousel logic needed.
+/// Detects horizontal mouse drag and Left/Right arrow keys,
+/// then calls PodcastCarousel.Swipe().
+/// Uses Unity's new Input System.
 /// </summary>
 [RequireComponent(typeof(PodcastCarousel))]
 public class SwipeInput : MonoBehaviour
@@ -28,30 +29,48 @@ public class SwipeInput : MonoBehaviour
         HandleMouseDrag();
     }
 
-    // ── Input handlers ────────────────────────────────────────────────────
+    // ── Keyboard ─────────────────────────────────────────────
 
     private void HandleArrowKeys()
     {
-        if (Input.GetKeyDown(KeyCode.RightArrow)) _carousel.Swipe(1);   // right arrow = next
-        if (Input.GetKeyDown(KeyCode.LeftArrow))  _carousel.Swipe(-1);  // left arrow  = previous
+        if (Keyboard.current == null)
+            return;
+
+        if (Keyboard.current.rightArrowKey.wasPressedThisFrame)
+        {
+            _carousel.Swipe(1); // next
+        }
+
+        if (Keyboard.current.leftArrowKey.wasPressedThisFrame)
+        {
+            _carousel.Swipe(-1); // previous
+        }
     }
+
+    // ── Mouse ────────────────────────────────────────────────
 
     private void HandleMouseDrag()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Mouse.current == null)
+            return;
+
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            _dragStartX  = Input.mousePosition.x;
-            _isDragging  = true;
+            _dragStartX = Mouse.current.position.ReadValue().x;
+            _isDragging = true;
         }
 
-        if (Input.GetMouseButtonUp(0) && _isDragging)
+        if (Mouse.current.leftButton.wasReleasedThisFrame && _isDragging)
         {
             _isDragging = false;
-            float delta = Input.mousePosition.x - _dragStartX;
+
+            float currentX = Mouse.current.position.ReadValue().x;
+            float delta = currentX - _dragStartX;
 
             if (Mathf.Abs(delta) >= _swipeThresholdPixels)
             {
-                // Swipe left (delta < 0) → next; swipe right (delta > 0) → previous
+                // Swipe left → next
+                // Swipe right → previous
                 _carousel.Swipe(delta < 0f ? 1 : -1);
             }
         }
