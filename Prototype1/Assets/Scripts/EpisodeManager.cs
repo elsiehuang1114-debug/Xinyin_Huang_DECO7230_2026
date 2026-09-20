@@ -104,28 +104,14 @@ public class EpisodeManager : MonoBehaviour
             Debug.LogWarning(
                 "EpisodeManager: XR teleport references are missing."
             );
-
             return;
         }
 
-        // Move the XR Origin so that the tracked HMD
-        // arrives at the Chapter Target's X/Z position.
-        Vector3 cameraOffset =
-            xrCamera.position - xrOrigin.position;
+        // --------------------------------------------------
+        // 1. Rotate XR Origin first so the HMD faces
+        //    the same horizontal direction as the target.
+        // --------------------------------------------------
 
-        cameraOffset.y = 0f;
-
-        Vector3 targetOriginPosition =
-            chapterTarget.position - cameraOffset;
-
-        // Keep the XR Origin on the target floor height.
-        targetOriginPosition.y =
-            chapterTarget.position.y;
-
-        xrOrigin.position = targetOriginPosition;
-
-        // Match the player's horizontal facing direction
-        // to the Chapter Target.
         Vector3 cameraForward = xrCamera.forward;
         cameraForward.y = 0f;
 
@@ -135,12 +121,11 @@ public class EpisodeManager : MonoBehaviour
         if (cameraForward.sqrMagnitude > 0.001f &&
             targetForward.sqrMagnitude > 0.001f)
         {
-            float angle =
-                Vector3.SignedAngle(
-                    cameraForward,
-                    targetForward,
-                    Vector3.up
-                );
+            float angle = Vector3.SignedAngle(
+                cameraForward,
+                targetForward,
+                Vector3.up
+            );
 
             xrOrigin.RotateAround(
                 xrCamera.position,
@@ -148,6 +133,37 @@ public class EpisodeManager : MonoBehaviour
                 angle
             );
         }
+
+        // --------------------------------------------------
+        // 2. After rotation, calculate the HMD horizontal
+        //    offset from the XR Origin.
+        // --------------------------------------------------
+
+        Vector3 cameraOffset =
+            xrCamera.position - xrOrigin.position;
+
+        cameraOffset.y = 0f;
+
+        // --------------------------------------------------
+        // 3. Move XR Origin so the user's HMD X/Z arrives
+        //    exactly above ChapterTeleportTarget.
+        // --------------------------------------------------
+
+        Vector3 newOriginPosition =
+            chapterTarget.position - cameraOffset;
+
+        newOriginPosition.y =
+            chapterTarget.position.y;
+
+        CharacterController cc = xrOrigin.GetComponent<CharacterController>();
+        bool ccWasEnabled = cc != null && cc.enabled;
+        if (ccWasEnabled)
+            cc.enabled = false;
+
+        xrOrigin.position = newOriginPosition;
+
+        if (ccWasEnabled)
+            cc.enabled = true;
     }
 
     private void ShowEpisode()

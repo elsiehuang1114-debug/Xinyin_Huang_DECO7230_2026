@@ -3,22 +3,60 @@ using UnityEngine;
 public class HeartDrag : MonoBehaviour
 {
     private Camera mainCamera;
-    private bool isDragging = false;
-    private float dragDistance;
 
+    private bool isMouseDragging = false;
+    private bool isXRDragging = false;
+
+    private float dragDistance;
     private Vector3 startPosition;
+    private Quaternion startRotation;
 
     public Transform snapPoint;
 
     private bool isFavourite = false;
 
-    void Start()
+    private void Start()
     {
         mainCamera = Camera.main;
+
         startPosition = transform.position;
+        startRotation = transform.rotation;
     }
 
-    void OnMouseDown()
+    // =========================================================
+    // XR GRAB
+    // =========================================================
+
+    public void XRGrabStarted()
+    {
+        if (isFavourite)
+            return;
+
+        isXRDragging = true;
+
+        Debug.Log("Heart XR grab started.");
+    }
+
+    public void XRGrabEnded()
+    {
+        isXRDragging = false;
+
+        // If it was not placed in Favourite Area,
+        // return it to the Heart Shelf.
+        if (!isFavourite)
+        {
+            transform.position = startPosition;
+            transform.rotation = startRotation;
+        }
+
+        Debug.Log("Heart XR grab ended.");
+    }
+
+    // =========================================================
+    // DESKTOP MOUSE FALLBACK
+    // =========================================================
+
+    private void OnMouseDown()
     {
         if (isFavourite)
             return;
@@ -26,7 +64,7 @@ public class HeartDrag : MonoBehaviour
         if (mainCamera == null)
             return;
 
-        isDragging = true;
+        isMouseDragging = true;
 
         dragDistance = Vector3.Distance(
             transform.position,
@@ -34,12 +72,13 @@ public class HeartDrag : MonoBehaviour
         );
     }
 
-    void OnMouseDrag()
+    private void OnMouseDrag()
     {
-        if (!isDragging || mainCamera == null)
+        if (!isMouseDragging || mainCamera == null)
             return;
 
-        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        Ray ray =
+            mainCamera.ScreenPointToRay(Input.mousePosition);
 
         Vector3 newPosition =
             ray.origin + ray.direction * dragDistance;
@@ -47,33 +86,49 @@ public class HeartDrag : MonoBehaviour
         transform.position = newPosition;
     }
 
-    void OnMouseUp()
+    private void OnMouseUp()
     {
-        isDragging = false;
+        isMouseDragging = false;
 
         if (!isFavourite)
         {
             transform.position = startPosition;
+            transform.rotation = startRotation;
         }
     }
 
+    // =========================================================
+    // FAVOURITE AREA
+    // =========================================================
+
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log("Heart entered trigger: " + other.name);
+
         if (isFavourite)
             return;
 
-        if (!isDragging)
+        if (!isXRDragging && !isMouseDragging)
             return;
 
         if (other.CompareTag("FavouriteArea"))
         {
+            Debug.Log("Favourite Area detected!");
+
             isFavourite = true;
-            isDragging = false;
+            isXRDragging = false;
+            isMouseDragging = false;
 
             if (snapPoint != null)
             {
                 transform.position = snapPoint.position;
                 transform.rotation = snapPoint.rotation;
+
+                Debug.Log("Heart snapped to HeartSnapPoint!");
+            }
+            else
+            {
+                Debug.LogWarning("Heart snapPoint is missing!");
             }
 
             Debug.Log("Podcast added to favourites!");
