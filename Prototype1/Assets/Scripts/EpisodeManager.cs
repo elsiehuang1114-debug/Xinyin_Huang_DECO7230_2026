@@ -11,92 +11,164 @@ public class EpisodeManager : MonoBehaviour
         public Material coverMaterial;
     }
 
+    [Header("Episode Data")]
     public EpisodeData[] episodes;
 
+    [Header("Current Episode UI")]
     public TMP_Text titleText;
     public TMP_Text durationText;
     public Renderer coverRenderer;
 
-    public Transform player;
+    [Header("XR Portal")]
+    public Transform xrOrigin;
+    public Transform xrCamera;
     public Transform chapterTarget;
+
+    [Header("Navigation")]
     public GameObject navigationPanel;
 
     private int currentIndex = 0;
 
-    /// <summary>Fired at the end of ShowEpisode so listeners can refresh carousel visuals.</summary>
     public System.Action OnEpisodeChanged;
 
-    /// <summary>Read-only access to the current index for the carousel.</summary>
     public int CurrentIndex => currentIndex;
 
-    /// <summary>Total number of episodes (0 if array is null).</summary>
-    public int EpisodeCount => episodes == null ? 0 : episodes.Length;
+    public int EpisodeCount =>
+        episodes == null ? 0 : episodes.Length;
 
-    /// <summary>Safe modulo access: returns null if episodes is empty.</summary>
     public EpisodeData GetEpisode(int i)
     {
-        if (episodes == null || episodes.Length == 0) return null;
-        int idx = ((i % episodes.Length) + episodes.Length) % episodes.Length;
+        if (episodes == null || episodes.Length == 0)
+            return null;
+
+        int idx =
+            ((i % episodes.Length) + episodes.Length)
+            % episodes.Length;
+
         return episodes[idx];
     }
 
-    void Start()
+    private void Start()
     {
         ShowEpisode();
     }
 
     public void NextEpisode()
     {
+        if (episodes == null || episodes.Length == 0)
+            return;
+
         currentIndex++;
 
         if (currentIndex >= episodes.Length)
-        {
             currentIndex = 0;
-        }
 
         ShowEpisode();
     }
 
     public void PreviousEpisode()
     {
+        if (episodes == null || episodes.Length == 0)
+            return;
+
         currentIndex--;
 
         if (currentIndex < 0)
-        {
             currentIndex = episodes.Length - 1;
-        }
 
         ShowEpisode();
     }
 
     public void SelectCurrentEpisode()
     {
-        Debug.Log("Selected Episode: " + episodes[currentIndex].title);
+        if (episodes == null || episodes.Length == 0)
+            return;
 
-        if (player != null && chapterTarget != null)
-        {
-            player.SetPositionAndRotation(
-                chapterTarget.position,
-                chapterTarget.rotation
-            );
-        }
+        Debug.Log(
+            "Selected Episode: " +
+            episodes[currentIndex].title
+        );
+
+        TeleportXRPlayerToChapter();
 
         if (navigationPanel != null)
-        {
             navigationPanel.SetActive(true);
+    }
+
+    private void TeleportXRPlayerToChapter()
+    {
+        if (xrOrigin == null ||
+            xrCamera == null ||
+            chapterTarget == null)
+        {
+            Debug.LogWarning(
+                "EpisodeManager: XR teleport references are missing."
+            );
+
+            return;
+        }
+
+        // Move the XR Origin so that the tracked HMD
+        // arrives at the Chapter Target's X/Z position.
+        Vector3 cameraOffset =
+            xrCamera.position - xrOrigin.position;
+
+        cameraOffset.y = 0f;
+
+        Vector3 targetOriginPosition =
+            chapterTarget.position - cameraOffset;
+
+        // Keep the XR Origin on the target floor height.
+        targetOriginPosition.y =
+            chapterTarget.position.y;
+
+        xrOrigin.position = targetOriginPosition;
+
+        // Match the player's horizontal facing direction
+        // to the Chapter Target.
+        Vector3 cameraForward = xrCamera.forward;
+        cameraForward.y = 0f;
+
+        Vector3 targetForward = chapterTarget.forward;
+        targetForward.y = 0f;
+
+        if (cameraForward.sqrMagnitude > 0.001f &&
+            targetForward.sqrMagnitude > 0.001f)
+        {
+            float angle =
+                Vector3.SignedAngle(
+                    cameraForward,
+                    targetForward,
+                    Vector3.up
+                );
+
+            xrOrigin.RotateAround(
+                xrCamera.position,
+                Vector3.up,
+                angle
+            );
         }
     }
-    
-    void ShowEpisode()
+
+    private void ShowEpisode()
     {
-        if (episodes.Length == 0) return;
+        if (episodes == null || episodes.Length == 0)
+            return;
 
-        titleText.text = episodes[currentIndex].title;
-        durationText.text = episodes[currentIndex].duration;
+        EpisodeData episode =
+            episodes[currentIndex];
 
-        if (episodes[currentIndex].coverMaterial != null)
+        if (titleText != null)
+            titleText.text = episode.title;
+
+        if (durationText != null)
+            durationText.text = episode.duration;
+
+        if (coverRenderer != null &&
+            episode.coverMaterial != null)
         {
-            coverRenderer.material = episodes[currentIndex].coverMaterial;
+            coverRenderer.material =
+                episode.coverMaterial;
         }
 
         OnEpisodeChanged?.Invoke();
