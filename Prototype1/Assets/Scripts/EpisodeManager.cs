@@ -107,10 +107,11 @@ public class EpisodeManager : MonoBehaviour
             return;
         }
 
-        // --------------------------------------------------
-        // 1. Rotate XR Origin first so the HMD faces
-        //    the same horizontal direction as the target.
-        // --------------------------------------------------
+        // ==========================================
+        // STEP 1
+        // Match the player's horizontal view
+        // direction with the Chapter target.
+        // ==========================================
 
         Vector3 cameraForward = xrCamera.forward;
         cameraForward.y = 0f;
@@ -134,36 +135,46 @@ public class EpisodeManager : MonoBehaviour
             );
         }
 
-        // --------------------------------------------------
-        // 2. After rotation, calculate the HMD horizontal
-        //    offset from the XR Origin.
-        // --------------------------------------------------
+        // ==========================================
+        // STEP 2
+        // Camera position may have changed after
+        // rotation. Read it again.
+        // ==========================================
 
-        Vector3 cameraOffset =
-            xrCamera.position - xrOrigin.position;
+        Vector3 cameraPosition =
+            xrCamera.position;
 
-        cameraOffset.y = 0f;
+        // ==========================================
+        // STEP 3
+        // Calculate horizontal correction needed
+        // to put the player's head at the
+        // ChapterTeleportTarget.
+        // ==========================================
 
-        // --------------------------------------------------
-        // 3. Move XR Origin so the user's HMD X/Z arrives
-        //    exactly above ChapterTeleportTarget.
-        // --------------------------------------------------
+        Vector3 correction =
+            chapterTarget.position -
+            cameraPosition;
 
-        Vector3 newOriginPosition =
-            chapterTarget.position - cameraOffset;
+        correction.y = 0f;
 
-        newOriginPosition.y =
-            chapterTarget.position.y;
+        // ==========================================
+        // STEP 4
+        // Move the whole XR Origin.
+        //
+        // IMPORTANT:
+        // Do NOT disable CharacterController.
+        // This avoids the Step Offset /
+        // inactive controller errors.
+        // ==========================================
 
-        CharacterController cc = xrOrigin.GetComponent<CharacterController>();
-        bool ccWasEnabled = cc != null && cc.enabled;
-        if (ccWasEnabled)
-            cc.enabled = false;
+        xrOrigin.position += correction;
 
-        xrOrigin.position = newOriginPosition;
-
-        if (ccWasEnabled)
-            cc.enabled = true;
+        Debug.Log(
+            "EPISODE TELEPORT | " +
+            "Target = " + chapterTarget.position +
+            " | Camera = " + xrCamera.position +
+            " | XR Origin = " + xrOrigin.position
+        );
     }
 
     private void ShowEpisode()
