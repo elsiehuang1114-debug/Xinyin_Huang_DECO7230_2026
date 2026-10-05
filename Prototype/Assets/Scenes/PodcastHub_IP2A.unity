@@ -2968,15 +2968,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 273944019}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b0b9e528a52674192b6baabb6ee36fbc, type: 3}
+  m_Script: {fileID: 11500000, guid: e1ea95c36798f4cffbc0247b4932bef4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorTeleport
+  m_EditorClassIdentifier: Assembly-CSharp::DoorAutoClose
   doorController: {fileID: 1249170730}
-  xrOrigin: {fileID: 0}
-  xrCamera: {fileID: 0}
-  episodeTarget: {fileID: 0}
+  xrOrigin: {fileID: 728480471}
 --- !u!1 &291970775
 GameObject:
   m_ObjectHideFlags: 0
@@ -6404,6 +6402,7 @@ MonoBehaviour:
   xrOrigin: {fileID: 728480471}
   xrCamera: {fileID: 1943136411}
   episodeTarget: {fileID: 1881279443}
+  hasTeleported: 0
 --- !u!65 &609230818
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7542,7 +7541,7 @@ Transform:
   m_GameObject: {fileID: 713743139}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.00000011920929, y: 0, z: -1.0000001}
+  m_LocalPosition: {x: 0.00000011920929, y: 0, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11492,6 +11491,7 @@ MonoBehaviour:
   xrOrigin: {fileID: 0}
   xrCamera: {fileID: 0}
   episodeTarget: {fileID: 0}
+  hasTeleported: 0
 --- !u!65 &1037726434
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18405,7 +18405,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 6, y: 1, z: 6}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1615464523
 GameObject:
@@ -20408,6 +20408,7 @@ MonoBehaviour:
   xrOrigin: {fileID: 0}
   xrCamera: {fileID: 0}
   episodeTarget: {fileID: 0}
+  hasTeleported: 0
 --- !u!114 &1794807566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21262,7 +21263,7 @@ Transform:
   m_GameObject: {fileID: 1881279442}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.7, z: -1.5}
+  m_LocalPosition: {x: 0, y: -3, z: -1.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22847,8 +22848,8 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
+  MinDistance: 2.7866411
+  MaxDistance: 8.815735
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
