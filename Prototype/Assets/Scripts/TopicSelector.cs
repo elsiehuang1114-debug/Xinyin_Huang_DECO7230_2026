@@ -2,20 +2,22 @@ using UnityEngine;
 
 // =============================================================
 // TOPIC SELECTOR
-// 控制 Podcast Door 上面的 Topic 选择
 //
-// 功能：
-// 1. 选择 AI / Emotional / Like List
-// 2. 当前选择的 Topic 变成绿色
-// 3. AI / Emotional 会通知 EpisodeManager 切换 Dataset
-// 4. Like List 目前只做视觉选择，之后再连接 Favourite 数据
+// Trigger = Select Topic
+// Grip    = Open Door
+//
+// AI / Emotional:
+// 直接进入对应 Dataset
+//
+// Like List:
+// 没 Favourite → 提示 + Door Locked
+// 有 Favourite → Favourite Dataset + Door Unlocked
 // =============================================================
 
 public class TopicSelector : MonoBehaviour
 {
     // =========================================================
     // EPISODE MANAGER
-    // 使用现有的 EpisodeManager，不重新建立 Episode Room
     // =========================================================
 
     [Header("Episode Manager")]
@@ -23,9 +25,15 @@ public class TopicSelector : MonoBehaviour
 
 
     // =========================================================
-    // TOPIC OBJECTS
-    // 三个门上的 Topic 方框
-    // Renderer 用来改变它们的 Material
+    // PODCAST DOOR
+    // =========================================================
+
+    [Header("Podcast Door")]
+    public XRDoorInteractable podcastDoor;
+
+
+    // =========================================================
+    // TOPIC RENDERERS
     // =========================================================
 
     [Header("Topic Renderers")]
@@ -36,8 +44,6 @@ public class TopicSelector : MonoBehaviour
 
     // =========================================================
     // MATERIALS
-    // Normal = 没有选择
-    // Selected = 当前选择，建议使用绿色
     // =========================================================
 
     [Header("Topic Materials")]
@@ -46,8 +52,19 @@ public class TopicSelector : MonoBehaviour
 
 
     // =========================================================
-    // 当前 Topic
-    // 默认 AI
+    // LIKE LIST MESSAGE
+    //
+    // 这个 GameObject 是：
+    // "No saved episodes yet
+    //  Save an episode first."
+    // =========================================================
+
+    [Header("Like List Feedback")]
+    public GameObject likeListMessage;
+
+
+    // =========================================================
+    // TOPIC TYPE
     // =========================================================
 
     private enum Topic
@@ -57,12 +74,12 @@ public class TopicSelector : MonoBehaviour
         LikeList
     }
 
-    private Topic currentTopic = Topic.AI;
+    private Topic currentTopic =
+        Topic.AI;
 
 
     // =========================================================
     // START
-    // 游戏开始时默认选择 AI
     // =========================================================
 
     private void Start()
@@ -73,17 +90,26 @@ public class TopicSelector : MonoBehaviour
 
     // =========================================================
     // SELECT AI
-    // 由 AI_Select 的 XR Simple Interactable 调用
     // =========================================================
 
     public void SelectAI()
     {
-        currentTopic = Topic.AI;
+        currentTopic =
+            Topic.AI;
 
-        // 更新门上的绿色选择状态
+
         UpdateVisuals();
 
-        // 调用我们已经存在的 EpisodeManager AI Dataset
+        HideLikeListMessage();
+
+
+        // AI 有 Episode，可以开门
+        if (podcastDoor != null)
+        {
+            podcastDoor.SetCanOpen(true);
+        }
+
+
         if (episodeManager != null)
         {
             episodeManager.SetAI();
@@ -95,23 +121,35 @@ public class TopicSelector : MonoBehaviour
             );
         }
 
-        Debug.Log("TOPIC SELECTED: AI");
+
+        Debug.Log(
+            "TOPIC SELECTED: AI"
+        );
     }
 
 
     // =========================================================
     // SELECT EMOTIONAL
-    // 由 Emotional_Select 的 XR Simple Interactable 调用
     // =========================================================
 
     public void SelectEmotional()
     {
-        currentTopic = Topic.Emotional;
+        currentTopic =
+            Topic.Emotional;
 
-        // 更新门上的绿色选择状态
+
         UpdateVisuals();
 
-        // 调用已经存在的 Emotional Dataset
+        HideLikeListMessage();
+
+
+        // Emotional 有 Episode，可以开门
+        if (podcastDoor != null)
+        {
+            podcastDoor.SetCanOpen(true);
+        }
+
+
         if (episodeManager != null)
         {
             episodeManager.SetEmotional();
@@ -123,40 +161,110 @@ public class TopicSelector : MonoBehaviour
             );
         }
 
-        Debug.Log("TOPIC SELECTED: EMOTIONAL");
+
+        Debug.Log(
+            "TOPIC SELECTED: EMOTIONAL"
+        );
     }
 
 
     // =========================================================
     // SELECT LIKE LIST
-    // 目前先完成选择 + 绿色反馈
     //
-    // Favourite Dataset 后面完成以后，
-    // 再在这里连接 EpisodeManager。
+    // 这里现在会真正检查 Favourite。
     // =========================================================
 
     public void SelectLikeList()
     {
-        currentTopic = Topic.LikeList;
+        currentTopic =
+            Topic.LikeList;
 
-        // 更新绿色选择状态
+
+        // Like List 方块先变绿
         UpdateVisuals();
 
-        Debug.Log("TOPIC SELECTED: LIKE LIST");
 
-        // 后面 Favourite 系统完成后，
-        // 我们会在这里加入：
-        //
-        // episodeManager.SetFavourites();
+        // -----------------------------------------------------
+        // EpisodeManager 不存在
+        // -----------------------------------------------------
+
+        if (episodeManager == null)
+        {
+            Debug.LogWarning(
+                "TopicSelector: EpisodeManager is missing."
+            );
+
+            ShowLikeListMessage();
+
+            if (podcastDoor != null)
+            {
+                podcastDoor.SetCanOpen(false);
+            }
+
+            return;
+        }
+
+
+        // -----------------------------------------------------
+        // CASE 1:
+        // 没有 Favourite
+        // -----------------------------------------------------
+
+        if (!episodeManager.HasFavourite)
+        {
+            ShowLikeListMessage();
+
+
+            // 空 Like List 不允许开门
+            if (podcastDoor != null)
+            {
+                podcastDoor.SetCanOpen(false);
+            }
+
+
+            Debug.Log(
+                "LIKE LIST EMPTY: No saved episodes yet."
+            );
+
+            return;
+        }
+
+
+        // -----------------------------------------------------
+        // CASE 2:
+        // 已经有 Favourite
+        // -----------------------------------------------------
+
+        HideLikeListMessage();
+
+
+        // Episode Room 切换到 Favourite Dataset
+        episodeManager.SetLikeList();
+
+
+        // Favourite 存在，所以允许开门
+        if (podcastDoor != null)
+        {
+            podcastDoor.SetCanOpen(true);
+        }
+
+
+        Debug.Log(
+            "TOPIC SELECTED: LIKE LIST"
+        );
+
+
+        Debug.Log(
+            "LIKE LIST READY: " +
+            episodeManager
+                .FavouriteEpisode
+                .title
+        );
     }
 
 
     // =========================================================
     // UPDATE VISUALS
-    // 每次 Topic 改变以后：
-    //
-    // 当前 Topic → Selected Material（绿色）
-    // 其他 Topic → Normal Material
     // =========================================================
 
     private void UpdateVisuals()
@@ -169,6 +277,7 @@ public class TopicSelector : MonoBehaviour
                 : normalMaterial;
         }
 
+
         if (emotionalRenderer != null)
         {
             emotionalRenderer.material =
@@ -177,12 +286,35 @@ public class TopicSelector : MonoBehaviour
                 : normalMaterial;
         }
 
+
         if (likeListRenderer != null)
         {
             likeListRenderer.material =
                 currentTopic == Topic.LikeList
                 ? selectedMaterial
                 : normalMaterial;
+        }
+    }
+
+
+    // =========================================================
+    // LIKE LIST MESSAGE
+    // =========================================================
+
+    private void ShowLikeListMessage()
+    {
+        if (likeListMessage != null)
+        {
+            likeListMessage.SetActive(true);
+        }
+    }
+
+
+    private void HideLikeListMessage()
+    {
+        if (likeListMessage != null)
+        {
+            likeListMessage.SetActive(false);
         }
     }
 }
