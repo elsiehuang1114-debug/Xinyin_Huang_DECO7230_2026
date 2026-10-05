@@ -11,8 +11,7 @@ public class HeartDrag : MonoBehaviour
 
     // =========================================================
     // EPISODE MANAGER
-    //
-    // Favourite Episode 的真正数据保存在 EpisodeManager。
+    // Favourite 数据统一保存在 EpisodeManager
     // =========================================================
 
     [Header("Episode")]
@@ -21,13 +20,24 @@ public class HeartDrag : MonoBehaviour
 
     // =========================================================
     // FAVOURITE SNAP POINT
-    //
-    // Heart 成功收藏后，
-    // 会固定到 Favourite Area 的这个位置。
+    // Heart 收藏成功后停留的位置
     // =========================================================
 
     [Header("Favourite Snap Point")]
     public Transform snapPoint;
+
+
+    // =========================================================
+    // FAVOURITE VISUAL FEEDBACK
+    //
+    // 收藏成功以后：
+    // DockingPlatform 会变成绿色
+    // =========================================================
+
+    [Header("Favourite Visual Feedback")]
+    public Renderer dockingPlatformRenderer;
+
+    public Material savedMaterial;
 
 
     // =========================================================
@@ -39,19 +49,12 @@ public class HeartDrag : MonoBehaviour
 
     private float dragDistance;
 
-
-    // Heart Shelf 原来的位置
     private Vector3 startPosition;
     private Quaternion startRotation;
 
 
     // =========================================================
-    // HEART FAVOURITE STATE
-    //
-    // 这里只记录 Heart 是否已经被放进 Favourite Area。
-    //
-    // Episode Favourite 数据本身不保存在这里，
-    // 而是统一保存在 EpisodeManager。
+    // FAVOURITE STATE
     // =========================================================
 
     private bool isFavourite = false;
@@ -68,14 +71,7 @@ public class HeartDrag : MonoBehaviour
     {
         mainCamera = Camera.main;
 
-
-        // -----------------------------------------------------
-        // 保存 Heart 在 Heart Shelf 上的初始位置。
-        //
-        // 如果用户 Grab 后没有成功放入 Favourite Area，
-        // Heart 会回到这里。
-        // -----------------------------------------------------
-
+        // 保存 Heart 在 Heart Shelf 上的初始位置
         startPosition =
             transform.position;
 
@@ -86,20 +82,15 @@ public class HeartDrag : MonoBehaviour
 
     // =========================================================
     // XR GRAB START
-    //
-    // Grip 开始抓 Heart。
+    // Grip 开始抓 Heart
     // =========================================================
 
     public void XRGrabStarted()
     {
-        // 已经成功 Favourite 后，
-        // 不再允许重新执行 Favourite 流程。
         if (isFavourite)
             return;
 
-
         isXRDragging = true;
-
 
         Debug.Log(
             "Heart XR grab started."
@@ -110,20 +101,18 @@ public class HeartDrag : MonoBehaviour
     // =========================================================
     // XR GRAB END
     //
-    // 如果没有成功进入 Favourite Area，
-    // Heart 回到 Heart Shelf。
+    // 如果没有成功收藏，
+    // Heart 回到 Heart Shelf
     // =========================================================
 
     public void XRGrabEnded()
     {
         isXRDragging = false;
 
-
         if (!isFavourite)
         {
             ReturnToShelf();
         }
-
 
         Debug.Log(
             "Heart XR grab ended."
@@ -133,9 +122,6 @@ public class HeartDrag : MonoBehaviour
 
     // =========================================================
     // DESKTOP MOUSE FALLBACK
-    //
-    // 保留原来的 Mouse 测试功能。
-    // 不影响 XR Grip。
     // =========================================================
 
     private void OnMouseDown()
@@ -143,13 +129,10 @@ public class HeartDrag : MonoBehaviour
         if (isFavourite)
             return;
 
-
         if (mainCamera == null)
             return;
 
-
         isMouseDragging = true;
-
 
         dragDistance =
             Vector3.Distance(
@@ -167,17 +150,14 @@ public class HeartDrag : MonoBehaviour
             return;
         }
 
-
         Ray ray =
             mainCamera.ScreenPointToRay(
                 Input.mousePosition
             );
 
-
         Vector3 newPosition =
             ray.origin +
             ray.direction * dragDistance;
-
 
         transform.position =
             newPosition;
@@ -187,7 +167,6 @@ public class HeartDrag : MonoBehaviour
     private void OnMouseUp()
     {
         isMouseDragging = false;
-
 
         if (!isFavourite)
         {
@@ -199,12 +178,11 @@ public class HeartDrag : MonoBehaviour
     // =========================================================
     // FAVOURITE AREA
     //
-    // Heart 在被用户拖动的时候进入 FavouriteArea：
+    // Heart 进入 FavouriteDropArea：
     //
-    // 1. 确认 EpisodeManager 存在
-    // 2. 要求 EpisodeManager 保存 Selected Episode
-    // 3. 保存成功后才把 Heart 标记为 Favourite
-    // 4. Heart Snap 到 Favourite Area
+    // 1. 保存当前 Episode
+    // 2. Heart Snap 到 HeartSnapPoint
+    // 3. DockingPlatform 变绿色
     // =========================================================
 
     private void OnTriggerEnter(Collider other)
@@ -215,20 +193,12 @@ public class HeartDrag : MonoBehaviour
         );
 
 
-        // -----------------------------------------------------
-        // 已经 Favourite，不重复执行。
-        // -----------------------------------------------------
-
+        // 已经收藏，不重复执行
         if (isFavourite)
             return;
 
 
-        // -----------------------------------------------------
-        // Heart 必须正在被用户 Grab / Drag。
-        //
-        // 防止 Heart 只是碰到 Trigger 就自动收藏。
-        // -----------------------------------------------------
-
+        // Heart 必须正在被用户 Grab / Drag
         if (!isXRDragging &&
             !isMouseDragging)
         {
@@ -236,10 +206,7 @@ public class HeartDrag : MonoBehaviour
         }
 
 
-        // -----------------------------------------------------
-        // 必须是 FavouriteArea。
-        // -----------------------------------------------------
-
+        // 必须进入 FavouriteArea
         if (!other.CompareTag("FavouriteArea"))
         {
             return;
@@ -267,13 +234,6 @@ public class HeartDrag : MonoBehaviour
 
         // =====================================================
         // SAVE FAVOURITE
-        //
-        // EpisodeManager 会读取：
-        //
-        // SelectedEpisode
-        // SelectedEpisodeCategory
-        //
-        // 并保存成 Favourite。
         // =====================================================
 
         bool saved =
@@ -281,11 +241,7 @@ public class HeartDrag : MonoBehaviour
                 .SaveSelectedEpisodeAsFavourite();
 
 
-        // -----------------------------------------------------
-        // 如果保存失败，
-        // Heart 不进入 Favourite 状态。
-        // -----------------------------------------------------
-
+        // 保存失败就不继续
         if (!saved)
         {
             Debug.LogWarning(
@@ -307,7 +263,7 @@ public class HeartDrag : MonoBehaviour
 
 
         // =====================================================
-        // SNAP HEART TO FAVOURITE AREA
+        // SNAP HEART
         // =====================================================
 
         if (snapPoint != null)
@@ -317,7 +273,6 @@ public class HeartDrag : MonoBehaviour
 
             transform.rotation =
                 snapPoint.rotation;
-
 
             Debug.Log(
                 "Heart snapped to HeartSnapPoint!"
@@ -332,12 +287,32 @@ public class HeartDrag : MonoBehaviour
 
 
         // =====================================================
-        // CONFIRMATION
+        // VISUAL CONFIRMATION
         //
-        // 目前先使用 Console。
-        // 下一步可以做世界空间文字：
-        //
-        // "Saved to Like List ✓"
+        // 收藏成功后 DockingPlatform 变绿色
+        // =====================================================
+
+        if (dockingPlatformRenderer != null &&
+            savedMaterial != null)
+        {
+            dockingPlatformRenderer.material =
+                savedMaterial;
+
+            Debug.Log(
+                "Favourite DockingPlatform changed to GREEN."
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "HeartDrag: DockingPlatform Renderer " +
+                "or Saved Material is missing."
+            );
+        }
+
+
+        // =====================================================
+        // COMPLETE
         // =====================================================
 
         Debug.Log(
