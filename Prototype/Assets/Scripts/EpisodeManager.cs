@@ -1,16 +1,11 @@
 using UnityEngine;
 using TMPro;
+using System.Collections.Generic;
 
 public class EpisodeManager : MonoBehaviour
 {
     // =========================================================
     // EPISODE DATA
-    //
-    // 每一个 Episode 现在拥有：
-    // 1. Title
-    // 2. Duration
-    // 3. Cover
-    // 4. 自己对应的 Chapters
     // =========================================================
 
     [System.Serializable]
@@ -20,18 +15,12 @@ public class EpisodeManager : MonoBehaviour
         public string duration;
         public Material coverMaterial;
 
-        // 每一个 Episode 自己的 Chapter 数据
+        // 每个 Episode 自己的 Chapter 数据
         public ChapterManager.ChapterData[] chapters;
     }
 
-
     // =========================================================
     // EPISODE CATEGORY
-    //
-    // 三个浏览模式：
-    // AI
-    // Emotional
-    // LikeList
     // =========================================================
 
     public enum EpisodeCategory
@@ -41,11 +30,9 @@ public class EpisodeManager : MonoBehaviour
         LikeList
     }
 
-
     [Header("Current Episode Category")]
     public EpisodeCategory currentCategory =
         EpisodeCategory.AI;
-
 
     // =========================================================
     // EPISODE DATASETS
@@ -54,15 +41,11 @@ public class EpisodeManager : MonoBehaviour
     [Header("AI Episodes")]
     public EpisodeData[] aiEpisodes;
 
-
     [Header("Emotional Episodes")]
     public EpisodeData[] emotionalEpisodes;
 
-
     // =========================================================
     // CURRENT EPISODE UI
-    //
-    // Episode Room 中间主卡片显示的内容
     // =========================================================
 
     [Header("Current Episode UI")]
@@ -70,29 +53,21 @@ public class EpisodeManager : MonoBehaviour
     public TMP_Text durationText;
     public Renderer coverRenderer;
 
-
     // =========================================================
     // CHAPTER PORTAL
-    //
-    // 用户 G 确认 Episode 后，
-    // 把 Selected Episode 的 Chapter 数据交给 ChapterManager。
     // =========================================================
 
     [Header("Chapter Portal")]
     public ChapterManager chapterManager;
 
-
     // =========================================================
     // XR PORTAL
-    //
-    // 保留你现在已经成功的 Teleport 系统
     // =========================================================
 
     [Header("XR Portal")]
     public Transform xrOrigin;
     public Transform xrCamera;
     public Transform chapterTarget;
-
 
     // =========================================================
     // NAVIGATION
@@ -101,6 +76,16 @@ public class EpisodeManager : MonoBehaviour
     [Header("Navigation")]
     public GameObject navigationPanel;
 
+    // =========================================================
+    // HEART FAVOURITE DISPLAY
+    //
+    // 新增：
+    // 玩家选择 Episode 后，
+    // 自动刷新 Heart 的收藏状态。
+    // =========================================================
+
+    [Header("Heart Favourite Display")]
+    public HeartDrag heartDrag;
 
     // =========================================================
     // CURRENT BROWSING STATE
@@ -108,98 +93,147 @@ public class EpisodeManager : MonoBehaviour
 
     private int currentIndex = 0;
 
-
     public System.Action OnEpisodeChanged;
-
 
     public int CurrentIndex =>
         currentIndex;
 
-
     // =========================================================
     // SELECTED EPISODE
-    //
-    // 用户最后通过 G 确认的 Episode。
-    //
-    // 后面的 Chapter Portal、
-    // Podcast Experience、
-    // Now Playing
-    // 都应该使用这一份 SelectedEpisode。
     // =========================================================
 
     private EpisodeData selectedEpisode = null;
 
-
     private EpisodeCategory selectedEpisodeCategory;
-
 
     public EpisodeData SelectedEpisode =>
         selectedEpisode;
 
-
     public EpisodeCategory SelectedEpisodeCategory =>
         selectedEpisodeCategory;
 
-
     // =========================================================
-    // FAVOURITE EPISODE
+    // FAVOURITE EPISODES
     //
-    // 当前 Prototype 只保存一个 Favourite。
-    // 新 Favourite 会替换旧 Favourite。
+    // 最多保存 6 个 Episode。
+    // 每个 Episode 独立收藏。
     // =========================================================
 
-    private EpisodeData favouriteEpisode = null;
+    private const int MaxFavourites = 6;
 
+    private readonly List<EpisodeData> favouriteEpisodes =
+        new List<EpisodeData>();
 
-    private EpisodeCategory favouriteCategory;
-
-
-    private bool hasFavourite = false;
-
+    // =========================================================
+    // FAVOURITE COMPATIBILITY
+    //
+    // 保留旧属性，兼容其他脚本。
+    // =========================================================
 
     public EpisodeData FavouriteEpisode =>
-        favouriteEpisode;
-
+        favouriteEpisodes.Count > 0
+            ? favouriteEpisodes[0]
+            : null;
 
     public EpisodeCategory FavouriteCategory =>
-        favouriteCategory;
-
+        GetOriginalCategory(FavouriteEpisode);
 
     public bool HasFavourite =>
-        hasFavourite;
+        favouriteEpisodes.Count > 0;
 
+    public int FavouriteCount =>
+        favouriteEpisodes.Count;
 
     // =========================================================
     // LIKE LIST DATASET
-    //
-    // Prototype 当前只有一个 Favourite，
-    // 所以 Like List 动态建立一个只有一集的 Array。
     // =========================================================
 
-    private EpisodeData[] FavouriteEpisodes
+    private EpisodeData[] FavouriteEpisodes =>
+        favouriteEpisodes.ToArray();
+
+    // =========================================================
+    // GET ORIGINAL CATEGORY
+    //
+    // 从 LikeList 进入时，
+    // 仍能识别 Episode 原本属于哪个分类。
+    // =========================================================
+
+    private EpisodeCategory GetOriginalCategory(
+        EpisodeData episode)
     {
-        get
+        if (episode == null)
         {
-            if (!hasFavourite ||
-                favouriteEpisode == null)
-            {
-                return new EpisodeData[0];
-            }
-
-
-            return new EpisodeData[]
-            {
-                favouriteEpisode
-            };
+            return EpisodeCategory.AI;
         }
+
+        if (emotionalEpisodes != null &&
+            System.Array.IndexOf(
+                emotionalEpisodes,
+                episode
+            ) >= 0)
+        {
+            return EpisodeCategory.Emotional;
+        }
+
+        return EpisodeCategory.AI;
     }
 
+    // =========================================================
+    // CHECK FAVOURITE
+    // =========================================================
+
+    public bool IsSelectedEpisodeFavourite()
+    {
+        return selectedEpisode != null &&
+               favouriteEpisodes.Contains(selectedEpisode);
+    }
+
+    // =========================================================
+    // REMOVE FAVOURITE
+    //
+    // Heart 放回 Shelf 时调用。
+    // =========================================================
+
+    public bool RemoveSelectedEpisodeFromFavourite()
+    {
+        if (selectedEpisode == null)
+        {
+            Debug.LogWarning(
+                "EpisodeManager: Cannot remove Favourite " +
+                "because no Episode is selected."
+            );
+
+            return false;
+        }
+
+        bool removed =
+            favouriteEpisodes.Remove(selectedEpisode);
+
+        if (!removed)
+        {
+            Debug.Log(
+                "EPISODE IS NOT FAVOURITED: " +
+                selectedEpisode.title
+            );
+
+            return false;
+        }
+
+        Debug.Log(
+            "FAVOURITE REMOVED: " +
+            selectedEpisode.title +
+            " | Remaining: " +
+            favouriteEpisodes.Count
+        );
+
+        // 通知 Carousel 更新
+        OnEpisodeChanged?.Invoke();
+
+        return true;
+    }
 
     // =========================================================
     // CURRENT EPISODES
-    //
-    // 根据 Topic / Category 决定 Episode Room
-    // 当前正在浏览哪一个 Dataset。
     // =========================================================
 
     private EpisodeData[] CurrentEpisodes
@@ -212,18 +246,15 @@ public class EpisodeManager : MonoBehaviour
                 return emotionalEpisodes;
             }
 
-
             if (currentCategory ==
                 EpisodeCategory.LikeList)
             {
                 return FavouriteEpisodes;
             }
 
-
             return aiEpisodes;
         }
     }
-
 
     // =========================================================
     // EPISODE COUNT
@@ -234,12 +265,10 @@ public class EpisodeManager : MonoBehaviour
             ? 0
             : CurrentEpisodes.Length;
 
-
     // =========================================================
     // GET EPISODE
     //
-    // PodcastCarousel 用这个方法读取
-    // Previous / Next Episode。
+    // PodcastCarousel 用于读取前后卡片。
     // =========================================================
 
     public EpisodeData GetEpisode(int i)
@@ -247,23 +276,19 @@ public class EpisodeManager : MonoBehaviour
         EpisodeData[] episodes =
             CurrentEpisodes;
 
-
         if (episodes == null ||
             episodes.Length == 0)
         {
             return null;
         }
 
-
         int idx =
             ((i % episodes.Length) +
              episodes.Length)
             % episodes.Length;
 
-
         return episodes[idx];
     }
-
 
     // =========================================================
     // START
@@ -273,7 +298,6 @@ public class EpisodeManager : MonoBehaviour
     {
         ShowEpisode();
     }
-
 
     // =========================================================
     // CATEGORY SWITCHING
@@ -286,7 +310,6 @@ public class EpisodeManager : MonoBehaviour
         );
     }
 
-
     public void SetEmotional()
     {
         SetCategory(
@@ -294,18 +317,13 @@ public class EpisodeManager : MonoBehaviour
         );
     }
 
-
     // =========================================================
     // SET LIKE LIST
-    //
-    // 只有存在 Favourite 时，
-    // 才允许进入 Like List。
     // =========================================================
 
     public void SetLikeList()
     {
-        if (!hasFavourite ||
-            favouriteEpisode == null)
+        if (!HasFavourite)
         {
             Debug.Log(
                 "LIKE LIST EMPTY: No saved episodes."
@@ -314,12 +332,10 @@ public class EpisodeManager : MonoBehaviour
             return;
         }
 
-
         SetCategory(
             EpisodeCategory.LikeList
         );
     }
-
 
     // =========================================================
     // SET CATEGORY
@@ -328,17 +344,12 @@ public class EpisodeManager : MonoBehaviour
     private void SetCategory(
         EpisodeCategory category)
     {
-        currentCategory =
-            category;
+        currentCategory = category;
 
-
-        // 每次切换 Topic，
-        // 从这个 Dataset 的第一集开始显示。
+        // 每次切换 Topic，从第一集开始
         currentIndex = 0;
 
-
         ShowEpisode();
-
 
         Debug.Log(
             "Episode Category Changed: " +
@@ -346,11 +357,8 @@ public class EpisodeManager : MonoBehaviour
         );
     }
 
-
     // =========================================================
     // NEXT EPISODE
-    //
-    // Swipe Left 或 Next Card 使用。
     // =========================================================
 
     public void NextEpisode()
@@ -358,32 +366,24 @@ public class EpisodeManager : MonoBehaviour
         EpisodeData[] episodes =
             CurrentEpisodes;
 
-
         if (episodes == null ||
             episodes.Length == 0)
         {
             return;
         }
 
-
         currentIndex++;
 
-
-        if (currentIndex >=
-            episodes.Length)
+        if (currentIndex >= episodes.Length)
         {
             currentIndex = 0;
         }
 
-
         ShowEpisode();
     }
 
-
     // =========================================================
     // PREVIOUS EPISODE
-    //
-    // Swipe Right 或 Previous Card 使用。
     // =========================================================
 
     public void PreviousEpisode()
@@ -391,16 +391,13 @@ public class EpisodeManager : MonoBehaviour
         EpisodeData[] episodes =
             CurrentEpisodes;
 
-
         if (episodes == null ||
             episodes.Length == 0)
         {
             return;
         }
 
-
         currentIndex--;
-
 
         if (currentIndex < 0)
         {
@@ -408,23 +405,20 @@ public class EpisodeManager : MonoBehaviour
                 episodes.Length - 1;
         }
 
-
         ShowEpisode();
     }
-
 
     // =========================================================
     // SELECT CURRENT EPISODE
     //
-    // 用户在 Episode Room 使用 G 确认当前 Episode。
-    //
-    // 执行顺序：
+    // 用户在 Episode Room 确认 Episode。
     //
     // 1. 保存 Selected Episode
-    // 2. 保存它原本属于哪个 Category
-    // 3. 把 Episode Chapters 同步给 ChapterManager
-    // 4. Teleport 到 Chapter Portal
-    // 5. 打开 Navigation Panel
+    // 2. 刷新 Heart 收藏状态（新增）
+    // 3. 保存原始 Category
+    // 4. 同步 Chapters
+    // 5. Teleport 到 Chapter Portal
+    // 6. 显示 Navigation Panel
     // =========================================================
 
     public void SelectCurrentEpisode()
@@ -432,13 +426,11 @@ public class EpisodeManager : MonoBehaviour
         EpisodeData[] episodes =
             CurrentEpisodes;
 
-
         if (episodes == null ||
             episodes.Length == 0)
         {
             return;
         }
-
 
         // -----------------------------------------------------
         // STEP 1
@@ -448,32 +440,42 @@ public class EpisodeManager : MonoBehaviour
         selectedEpisode =
             episodes[currentIndex];
 
+        // -----------------------------------------------------
+        // STEP 2（新增）
+        // 根据当前 Episode 的收藏状态刷新 Heart
+        //
+        // 已收藏：
+        // Heart 显示在绿色平台。
+        //
+        // 未收藏：
+        // Heart 显示在 Shelf。
+        // -----------------------------------------------------
+
+        if (heartDrag != null)
+        {
+            heartDrag.RefreshHeartState();
+
+            Debug.Log(
+                "EPISODE SELECTED → HEART STATE REFRESHED"
+            );
+        }
 
         // -----------------------------------------------------
-        // STEP 2
+        // STEP 3
         // 保存 Episode 原本的 Category
-        //
-        // 如果从 Like List 进入，
-        // 不能把它记录成 LikeList。
-        //
-        // 例如：
-        // Slow Down 原本属于 Emotional，
-        // 从 Like List 再次选择时，
-        // Category 仍然应该是 Emotional。
         // -----------------------------------------------------
 
         if (currentCategory ==
             EpisodeCategory.LikeList)
         {
             selectedEpisodeCategory =
-                favouriteCategory;
+                GetOriginalCategory(selectedEpisode);
         }
         else
         {
             selectedEpisodeCategory =
                 currentCategory;
         }
-
 
         Debug.Log(
             "SELECTED EPISODE SAVED: " +
@@ -482,16 +484,9 @@ public class EpisodeManager : MonoBehaviour
             selectedEpisodeCategory
         );
 
-
         // -----------------------------------------------------
-        // STEP 3
-        // 把当前 Selected Episode
-        // 同步给 Chapter Portal。
-        //
-        // ChapterManager 会读取：
-        // selectedEpisode.chapters
-        //
-        // 然后刷新 ChapterStation_0 ~ 3。
+        // STEP 4
+        // 同步 Chapter 数据
         // -----------------------------------------------------
 
         if (chapterManager != null)
@@ -507,17 +502,17 @@ public class EpisodeManager : MonoBehaviour
             );
         }
 
-
         // -----------------------------------------------------
-        // STEP 4
+        // STEP 5
         // Teleport 到 Chapter Portal
+        //
+        // 保留原来的 XR Teleport 算法。
         // -----------------------------------------------------
 
         TeleportXRPlayerToChapter();
 
-
         // -----------------------------------------------------
-        // STEP 5
+        // STEP 6
         // 显示 Navigation Panel
         // -----------------------------------------------------
 
@@ -527,11 +522,10 @@ public class EpisodeManager : MonoBehaviour
         }
     }
 
-
     // =========================================================
     // SAVE FAVOURITE
     //
-    // Heart 放进 Favourite Area 后调用。
+    // 最多收藏 6 个 Episode。
     // =========================================================
 
     public bool SaveSelectedEpisodeAsFavourite()
@@ -539,51 +533,57 @@ public class EpisodeManager : MonoBehaviour
         if (selectedEpisode == null)
         {
             Debug.LogWarning(
-                "EpisodeManager: Cannot save Favourite because " +
-                "no Episode has been selected."
+                "EpisodeManager: Cannot save Favourite " +
+                "because no Episode has been selected."
             );
-
 
             return false;
         }
 
+        // 已收藏：不重复添加
+        if (favouriteEpisodes.Contains(selectedEpisode))
+        {
+            Debug.Log(
+                "EPISODE ALREADY FAVOURITED: " +
+                selectedEpisode.title
+            );
 
-        favouriteEpisode =
-            selectedEpisode;
+            return true;
+        }
 
+        // 最多收藏 6 个
+        if (favouriteEpisodes.Count >= MaxFavourites)
+        {
+            Debug.LogWarning(
+                "FAVOURITE LIST FULL: Maximum 6 episodes."
+            );
 
-        favouriteCategory =
-            selectedEpisodeCategory;
+            return false;
+        }
 
-
-        hasFavourite = true;
-
+        // 添加收藏
+        favouriteEpisodes.Add(selectedEpisode);
 
         Debug.Log(
             "FAVOURITE SAVED: " +
-            favouriteEpisode.title +
-            " | Category: " +
-            favouriteCategory
+            selectedEpisode.title +
+            " | Total: " +
+            favouriteEpisodes.Count
         );
 
-
-        Debug.Log(
-            "EpisodeManager HasFavourite = " +
-            hasFavourite
-        );
-
+        // 通知 Carousel 更新
+        OnEpisodeChanged?.Invoke();
 
         return true;
     }
 
-
     // =========================================================
     // TELEPORT TO CHAPTER PORTAL
     //
-    // 保留你之前已经成功的 XR Teleport 逻辑。
+    // 保留原来的 XR Teleport 算法。
     //
-    // 不 Disable CharacterController，
-    // 避免 Step Offset Error。
+    // 不禁用 CharacterController。
+    // 不修改 XR Floor Tracking 高度。
     // =========================================================
 
     private void TeleportXRPlayerToChapter()
@@ -596,10 +596,8 @@ public class EpisodeManager : MonoBehaviour
                 "EpisodeManager: XR teleport references are missing."
             );
 
-
             return;
         }
-
 
         // -----------------------------------------------------
         // STEP 1
@@ -609,9 +607,7 @@ public class EpisodeManager : MonoBehaviour
         Vector3 cameraForward =
             xrCamera.forward;
 
-
         cameraForward.y = 0f;
-
 
         // -----------------------------------------------------
         // STEP 2
@@ -621,20 +617,15 @@ public class EpisodeManager : MonoBehaviour
         Vector3 targetForward =
             chapterTarget.forward;
 
-
         targetForward.y = 0f;
-
 
         // -----------------------------------------------------
         // STEP 3
-        // 旋转整个 XR Origin，
-        // 让玩家进入 Chapter Portal 后朝向正确方向。
+        // 旋转 XR Origin
         // -----------------------------------------------------
 
-        if (cameraForward.sqrMagnitude >
-                0.001f &&
-            targetForward.sqrMagnitude >
-                0.001f)
+        if (cameraForward.sqrMagnitude > 0.001f &&
+            targetForward.sqrMagnitude > 0.001f)
         {
             float angle =
                 Vector3.SignedAngle(
@@ -643,7 +634,6 @@ public class EpisodeManager : MonoBehaviour
                     Vector3.up
                 );
 
-
             xrOrigin.RotateAround(
                 xrCamera.position,
                 Vector3.up,
@@ -651,39 +641,33 @@ public class EpisodeManager : MonoBehaviour
             );
         }
 
-
         // -----------------------------------------------------
         // STEP 4
-        // 旋转以后重新读取 Camera 位置
+        // 重新读取 Camera 位置
         // -----------------------------------------------------
 
         Vector3 cameraPosition =
             xrCamera.position;
 
-
         // -----------------------------------------------------
         // STEP 5
-        // 计算 Camera 到 Chapter Target 的水平距离
+        // 计算水平位置差
         // -----------------------------------------------------
 
         Vector3 correction =
             chapterTarget.position -
             cameraPosition;
 
-
-        // Floor Tracking：
-        // 不修改玩家高度
+        // 保留 XR Floor Tracking 高度
         correction.y = 0f;
-
 
         // -----------------------------------------------------
         // STEP 6
-        // 移动整个 XR Origin
+        // 移动 XR Origin
         // -----------------------------------------------------
 
         xrOrigin.position +=
             correction;
-
 
         Debug.Log(
             "EPISODE TELEPORT | " +
@@ -696,18 +680,16 @@ public class EpisodeManager : MonoBehaviour
         );
     }
 
-
     // =========================================================
     // SHOW EPISODE
     //
-    // 更新 Episode Room 当前中间 Episode Card。
+    // 更新 Episode Room 中间卡片。
     // =========================================================
 
     private void ShowEpisode()
     {
         EpisodeData[] episodes =
             CurrentEpisodes;
-
 
         if (episodes == null ||
             episodes.Length == 0)
@@ -716,10 +698,8 @@ public class EpisodeManager : MonoBehaviour
                 "SHOW EPISODE: Current dataset is empty."
             );
 
-
             return;
         }
-
 
         // 防止 Index 超出范围
         if (currentIndex < 0 ||
@@ -728,10 +708,8 @@ public class EpisodeManager : MonoBehaviour
             currentIndex = 0;
         }
 
-
         EpisodeData episode =
             episodes[currentIndex];
-
 
         // -----------------------------------------------------
         // TITLE
@@ -743,7 +721,6 @@ public class EpisodeManager : MonoBehaviour
                 episode.title;
         }
 
-
         // -----------------------------------------------------
         // DURATION
         // -----------------------------------------------------
@@ -753,7 +730,6 @@ public class EpisodeManager : MonoBehaviour
             durationText.text =
                 episode.duration;
         }
-
 
         // -----------------------------------------------------
         // COVER
@@ -766,11 +742,8 @@ public class EpisodeManager : MonoBehaviour
                 episode.coverMaterial;
         }
 
-
         // -----------------------------------------------------
-        // 通知 PodcastCarousel：
-        // 当前 Episode 已改变，
-        // Previous / Next Card 也需要刷新。
+        // 通知 PodcastCarousel 刷新卡片
         // -----------------------------------------------------
 
         OnEpisodeChanged?.Invoke();

@@ -2,47 +2,35 @@ using UnityEngine;
 
 public class HeartDrag : MonoBehaviour
 {
-    // =========================================================
+    // =====================================================
     // REFERENCES
-    // =========================================================
+    // =====================================================
 
     private Camera mainCamera;
-
-
-    // =========================================================
-    // EPISODE MANAGER
-    // Favourite 数据统一保存在 EpisodeManager
-    // =========================================================
 
     [Header("Episode")]
     public EpisodeManager episodeManager;
 
-
-    // =========================================================
-    // FAVOURITE SNAP POINT
-    // Heart 收藏成功后停留的位置
-    // =========================================================
-
     [Header("Favourite Snap Point")]
     public Transform snapPoint;
 
-
-    // =========================================================
-    // FAVOURITE VISUAL FEEDBACK
-    //
-    // 收藏成功以后：
-    // DockingPlatform 会变成绿色
-    // =========================================================
-
     [Header("Favourite Visual Feedback")]
     public Renderer dockingPlatformRenderer;
-
     public Material savedMaterial;
 
+    // =====================================================
+    // HEART SHELF DROP AREA
+    //
+    // 用来检测玩家是否把 Heart 放回 Shelf。
+    // 下一步在 Unity 中创建并连接。
+    // =====================================================
 
-    // =========================================================
+    [Header("Heart Shelf Drop Area")]
+    public Collider heartShelfDropArea;
+
+    // =====================================================
     // DRAG STATE
-    // =========================================================
+    // =====================================================
 
     private bool isMouseDragging = false;
     private bool isXRDragging = false;
@@ -52,288 +40,274 @@ public class HeartDrag : MonoBehaviour
     private Vector3 startPosition;
     private Quaternion startRotation;
 
+    private Material originalMaterial;
 
-    // =========================================================
+    // =====================================================
     // FAVOURITE STATE
-    // =========================================================
+    // =====================================================
 
     private bool isFavourite = false;
 
-    public bool IsFavourite =>
-        isFavourite;
+    public bool IsFavourite => isFavourite;
 
-
-    // =========================================================
+    // =====================================================
     // START
-    // =========================================================
+    // =====================================================
 
     private void Start()
     {
         mainCamera = Camera.main;
 
-        // 保存 Heart 在 Heart Shelf 上的初始位置
-        startPosition =
-            transform.position;
+        // 保存 Heart 在 Shelf 上的初始位置
+        startPosition = transform.position;
+        startRotation = transform.rotation;
 
-        startRotation =
-            transform.rotation;
+        // 保存平台默认材质
+        if (dockingPlatformRenderer != null)
+        {
+            originalMaterial =
+                dockingPlatformRenderer.sharedMaterial;
+        }
+
+        // 根据当前 Episode 的收藏状态显示 Heart
+        RefreshHeartState();
     }
 
+    // =====================================================
+    // REFRESH HEART STATE
+    //
+    // 重新选择 Episode 时调用。
+    // =====================================================
 
-    // =========================================================
-    // XR GRAB START
-    // Grip 开始抓 Heart
-    // =========================================================
-
-    public void XRGrabStarted()
+    public void RefreshHeartState()
     {
-        if (isFavourite)
+        if (episodeManager == null)
             return;
 
-        isXRDragging = true;
+        isFavourite =
+            episodeManager.IsSelectedEpisodeFavourite();
+
+        isMouseDragging = false;
+        isXRDragging = false;
+
+        if (isFavourite)
+        {
+            // 已收藏：Heart 显示在绿色平台
+            if (snapPoint != null)
+            {
+                transform.position = snapPoint.position;
+                transform.rotation = snapPoint.rotation;
+            }
+
+            if (dockingPlatformRenderer != null &&
+                savedMaterial != null)
+            {
+                dockingPlatformRenderer.material =
+                    savedMaterial;
+            }
+        }
+        else
+        {
+            // 未收藏：Heart 返回 Shelf
+            ReturnToShelf();
+
+            if (dockingPlatformRenderer != null &&
+                originalMaterial != null)
+            {
+                dockingPlatformRenderer.material =
+                    originalMaterial;
+            }
+        }
 
         Debug.Log(
-            "Heart XR grab started."
+            "HEART STATE REFRESHED | Favourite = " +
+            isFavourite
         );
     }
 
+    // =====================================================
+    // XR GRAB START
+    // =====================================================
 
-    // =========================================================
+    public void XRGrabStarted()
+    {
+        // 已收藏的 Heart 也允许再次抓取
+        isXRDragging = true;
+
+        Debug.Log("Heart XR grab started.");
+    }
+
+    // =====================================================
     // XR GRAB END
-    //
-    // 如果没有成功收藏，
-    // Heart 回到 Heart Shelf
-    // =========================================================
+    // =====================================================
 
     public void XRGrabEnded()
     {
         isXRDragging = false;
 
-        if (!isFavourite)
-        {
-            ReturnToShelf();
-        }
-
-        Debug.Log(
-            "Heart XR grab ended."
-        );
+        // 如果没有成功放入对应区域，
+        // Heart 回到当前状态应该在的位置
+        RestoreHeartPosition();
     }
 
-
-    // =========================================================
-    // DESKTOP MOUSE FALLBACK
-    // =========================================================
+    // =====================================================
+    // DESKTOP MOUSE
+    // =====================================================
 
     private void OnMouseDown()
     {
-        if (isFavourite)
-            return;
-
         if (mainCamera == null)
             return;
 
         isMouseDragging = true;
 
-        dragDistance =
-            Vector3.Distance(
-                transform.position,
-                mainCamera.transform.position
-            );
+        dragDistance = Vector3.Distance(
+            transform.position,
+            mainCamera.transform.position
+        );
     }
-
 
     private void OnMouseDrag()
     {
-        if (!isMouseDragging ||
-            mainCamera == null)
-        {
+        if (!isMouseDragging || mainCamera == null)
             return;
-        }
 
-        Ray ray =
-            mainCamera.ScreenPointToRay(
-                Input.mousePosition
-            );
-
-        Vector3 newPosition =
-            ray.origin +
-            ray.direction * dragDistance;
+        Ray ray = mainCamera.ScreenPointToRay(
+            Input.mousePosition
+        );
 
         transform.position =
-            newPosition;
+            ray.origin + ray.direction * dragDistance;
     }
-
 
     private void OnMouseUp()
     {
         isMouseDragging = false;
 
-        if (!isFavourite)
-        {
-            ReturnToShelf();
-        }
+        RestoreHeartPosition();
     }
 
-
-    // =========================================================
-    // FAVOURITE AREA
-    //
-    // Heart 进入 FavouriteDropArea：
-    //
-    // 1. 保存当前 Episode
-    // 2. Heart Snap 到 HeartSnapPoint
-    // 3. DockingPlatform 变绿色
-    // =========================================================
+    // =====================================================
+    // TRIGGER DETECTION
+    // =====================================================
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log(
-            "Heart entered trigger: " +
-            other.name
-        );
-
-
-        // 已经收藏，不重复执行
-        if (isFavourite)
+        // 只有正在拖动时才处理
+        if (!isXRDragging && !isMouseDragging)
             return;
-
-
-        // Heart 必须正在被用户 Grab / Drag
-        if (!isXRDragging &&
-            !isMouseDragging)
-        {
-            return;
-        }
-
-
-        // 必须进入 FavouriteArea
-        if (!other.CompareTag("FavouriteArea"))
-        {
-            return;
-        }
-
-
-        Debug.Log(
-            "Favourite Area detected!"
-        );
-
-
-        // =====================================================
-        // CHECK EPISODE MANAGER
-        // =====================================================
 
         if (episodeManager == null)
+            return;
+
+        // -------------------------------------------------
+        // ADD FAVOURITE
+        // -------------------------------------------------
+
+        if (other.CompareTag("FavouriteArea"))
         {
-            Debug.LogWarning(
-                "HeartDrag: EpisodeManager is missing."
-            );
+            if (!isFavourite)
+            {
+                bool saved =
+                    episodeManager
+                        .SaveSelectedEpisodeAsFavourite();
+
+                if (saved)
+                {
+                    isFavourite = true;
+
+                    Debug.Log(
+                        "HEART → FAVOURITE ADDED"
+                    );
+                }
+            }
 
             return;
         }
 
+        // -------------------------------------------------
+        // REMOVE FAVOURITE
+        // -------------------------------------------------
 
-        // =====================================================
-        // SAVE FAVOURITE
-        // =====================================================
-
-        bool saved =
-            episodeManager
-                .SaveSelectedEpisodeAsFavourite();
-
-
-        // 保存失败就不继续
-        if (!saved)
+        if (heartShelfDropArea != null &&
+            other == heartShelfDropArea)
         {
-            Debug.LogWarning(
-                "HeartDrag: Favourite could not be saved."
-            );
+            if (isFavourite)
+            {
+                bool removed =
+                    episodeManager
+                        .RemoveSelectedEpisodeFromFavourite();
 
-            return;
+                if (removed)
+                {
+                    isFavourite = false;
+
+                    Debug.Log(
+                        "HEART → FAVOURITE REMOVED"
+                    );
+                }
+            }
         }
-
-
-        // =====================================================
-        // FAVOURITE SUCCESS
-        // =====================================================
-
-        isFavourite = true;
-
-        isXRDragging = false;
-        isMouseDragging = false;
-
-
-        // =====================================================
-        // SNAP HEART
-        // =====================================================
-
-        if (snapPoint != null)
-        {
-            transform.position =
-                snapPoint.position;
-
-            transform.rotation =
-                snapPoint.rotation;
-
-            Debug.Log(
-                "Heart snapped to HeartSnapPoint!"
-            );
-        }
-        else
-        {
-            Debug.LogWarning(
-                "HeartDrag: snapPoint is missing!"
-            );
-        }
-
-
-        // =====================================================
-        // VISUAL CONFIRMATION
-        //
-        // 收藏成功后 DockingPlatform 变绿色
-        // =====================================================
-
-        if (dockingPlatformRenderer != null &&
-            savedMaterial != null)
-        {
-            dockingPlatformRenderer.material =
-                savedMaterial;
-
-            Debug.Log(
-                "Favourite DockingPlatform changed to GREEN."
-            );
-        }
-        else
-        {
-            Debug.LogWarning(
-                "HeartDrag: DockingPlatform Renderer " +
-                "or Saved Material is missing."
-            );
-        }
-
-
-        // =====================================================
-        // COMPLETE
-        // =====================================================
-
-        Debug.Log(
-            "HEART FAVOURITE COMPLETE: " +
-            episodeManager
-                .FavouriteEpisode
-                .title
-        );
     }
 
+    // =====================================================
+    // RESTORE HEART POSITION
+    //
+    // 抓取结束后，根据收藏状态决定位置。
+    // =====================================================
 
-    // =========================================================
-    // RETURN TO HEART SHELF
-    // =========================================================
+    private void RestoreHeartPosition()
+    {
+        if (isFavourite)
+        {
+            if (snapPoint != null)
+            {
+                transform.position = snapPoint.position;
+                transform.rotation = snapPoint.rotation;
+            }
+
+            if (dockingPlatformRenderer != null &&
+                savedMaterial != null)
+            {
+                dockingPlatformRenderer.material =
+                    savedMaterial;
+            }
+        }
+        else
+        {
+            ReturnToShelf();
+
+            if (dockingPlatformRenderer != null &&
+                originalMaterial != null)
+            {
+                dockingPlatformRenderer.material =
+                    originalMaterial;
+            }
+        }
+    }
+
+    // =====================================================
+    // RETURN TO SHELF
+    // =====================================================
 
     private void ReturnToShelf()
     {
-        transform.position =
-            startPosition;
+        transform.position = startPosition;
+        transform.rotation = startRotation;
+    }
 
-        transform.rotation =
-            startRotation;
+    // =====================================================
+    // COMPATIBILITY
+    //
+    // 保留之前的 ResetHeart() 方法，
+    // 避免 PodcastAudioTrigger 出现编译错误。
+    //
+    // 现在重置会根据 Episode 收藏状态显示 Heart，
+    // 而不是强制取消收藏视觉状态。
+    // =====================================================
+
+    public void ResetHeart()
+    {
+        RefreshHeartState();
     }
 }
