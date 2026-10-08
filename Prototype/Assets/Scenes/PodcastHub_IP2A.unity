@@ -6398,11 +6398,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0b9e528a52674192b6baabb6ee36fbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorTeleport
-  doorController: {fileID: 478916438}
-  xrOrigin: {fileID: 728480471}
-  xrCamera: {fileID: 1943136411}
-  episodeTarget: {fileID: 1881279443}
-  hasTeleported: 0
 --- !u!65 &609230818
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9252,6 +9247,11 @@ MonoBehaviour:
     time: 18:20 - 23:10
   chapterTitleText: {fileID: 522489805}
   chapterTimeText: {fileID: 506650895}
+  chapterStations:
+  - {fileID: 1893746799}
+  - {fileID: 827433551}
+  - {fileID: 1328995963}
+  - {fileID: 965404366}
   doorRenderer: {fileID: 134099420}
   doorInactiveColor: {r: 0.3529412, g: 0.41960785, b: 0.49019608, a: 1}
   doorSelectedColor: {r: 0.18039216, g: 0.8, b: 0.44313726, a: 1}
@@ -9761,7 +9761,19 @@ MonoBehaviour:
       m_Calls: []
   m_SelectEntered:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 912461301}
+        m_TargetAssemblyTypeName: XREpisodeSelect, Assembly-CSharp
+        m_MethodName: SelectEpisode
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_SelectExited:
     m_PersistentCalls:
       m_Calls: []
@@ -9780,13 +9792,13 @@ MonoBehaviour:
   m_Activated:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 912461301}
-        m_TargetAssemblyTypeName: XREpisodeSelect, Assembly-CSharp
-        m_MethodName: SelectEpisode
+      - m_Target: {fileID: 1488076760}
+        m_TargetAssemblyTypeName: XRCarouselSwipe, Assembly-CSharp
+        m_MethodName: StartInteraction
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -9794,7 +9806,19 @@ MonoBehaviour:
         m_CallState: 2
   m_Deactivated:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1488076760}
+        m_TargetAssemblyTypeName: XRCarouselSwipe, Assembly-CSharp
+        m_MethodName: EndInteraction
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_StartingHoverFilters: []
   m_StartingSelectFilters: []
   m_StartingInteractionStrengthFilters: []
@@ -11487,11 +11511,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0b9e528a52674192b6baabb6ee36fbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorTeleport
-  doorController: {fileID: 478916438}
-  xrOrigin: {fileID: 0}
-  xrCamera: {fileID: 0}
-  episodeTarget: {fileID: 0}
-  hasTeleported: 0
 --- !u!65 &1037726434
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11570,6 +11589,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1037726429}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1040097898 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1670256625, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 1725619111}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1052602120
 GameObject:
   m_ObjectHideFlags: 0
@@ -12527,7 +12551,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1182205480}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
   m_LocalPosition: {x: -1.15, y: 0, z: -0.015}
   m_LocalScale: {x: 1.1, y: 1.1, z: 0.02}
   m_ConstrainProportionsScale: 0
@@ -14287,6 +14311,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1324022350}
+  - component: {fileID: 1324022351}
   m_Layer: 0
   m_Name: PodcastExperience
   m_TagString: Untagged
@@ -14318,6 +14343,24 @@ Transform:
   - {fileID: 1611364494}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!114 &1324022351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1324022349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 924e628cd42d941abae6d854347449e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PodcastExperienceDisplay
+  episodeManager: {fileID: 1488076757}
+  chapterManager: {fileID: 870838996}
+  podcastCover: {fileID: 1182205483}
+  experienceTitle: {fileID: 1577001167}
+  chapterValue: {fileID: 15828534}
+  timeRange: {fileID: 1795556465}
 --- !u!1 &1328995962
 GameObject:
   m_ObjectHideFlags: 0
@@ -16684,6 +16727,7 @@ GameObject:
   - component: {fileID: 1488076757}
   - component: {fileID: 1488076759}
   - component: {fileID: 1488076758}
+  - component: {fileID: 1488076760}
   m_Layer: 0
   m_Name: EpisodeRoom
   m_TagString: Untagged
@@ -16727,25 +16771,80 @@ MonoBehaviour:
   - title: Future of AI
     duration: 20mins
     coverMaterial: {fileID: 2100000, guid: c1242c3c963d94c71b72aeac31ea6e66, type: 2}
+    chapters:
+    - title: Introduction
+      time: 00:00 - 04:30
+    - title: AI in Everyday Life
+      time: 04:30 - 09:30
+    - title: Human and AI
+      time: 09:30 - 15:00
+    - title: The Future Ahead
+      time: 15:00 - 20:00
   - title: Digital Life
     duration: 18mins
     coverMaterial: {fileID: 2100000, guid: 15fac899548fa4fe59e3bd7e07f4cbba, type: 2}
+    chapters:
+    - title: Living Online
+      time: 00:00 - 04:20
+    - title: Always Connected
+      time: 04:20 - 08:40
+    - title: Digital Wellbeing
+      time: 08:40 - 13:30
+    - title: Finding Balance
+      time: 13:30 - 18:00
   - title: AI Ethics
     duration: 21mins
     coverMaterial: {fileID: 2100000, guid: da8bf57f43f014c0ca4beadfd505e1c7, type: 2}
+    chapters:
+    - title: What Is AI Ethics?
+      time: 00:00 - 05:00
+    - title: Bias and Fairness
+      time: 05:00 - 10:20
+    - title: Privacy and Responsibility
+      time: 10:20 - 15:50
+    - title: Building Responsible AI
+      time: 15:50 - 21:00
   emotionalEpisodes:
   - title: Slow Down
     duration: 18 min
     coverMaterial: {fileID: 2100000, guid: a3b7d7a8b1c16460c99db87a8175ef84, type: 2}
+    chapters:
+    - title: Pause
+      time: 00:00 - 04:00
+    - title: Notice the Moment
+      time: 04:00 - 08:30
+    - title: Release the Rush
+      time: 08:30 - 13:20
+    - title: Move Gently
+      time: 13:20 - 18:00
   - title: Inner Calm
     duration: 24 min
     coverMaterial: {fileID: 2100000, guid: 980cfe09d8a1247a589955faf5b1a27b, type: 2}
+    chapters:
+    - title: Arriving
+      time: 00:00 - 05:30
+    - title: Quiet the Mind
+      time: 05:30 - 11:30
+    - title: Finding Stillness
+      time: 11:30 - 17:40
+    - title: Carry the Calm
+      time: 17:40 - 24:00
   - title: Just Breathe
     duration: 21 min
     coverMaterial: {fileID: 2100000, guid: 3e49716855469440f991531278141591, type: 2}
+    chapters:
+    - title: Begin with Breath
+      time: 00:00 - 04:40
+    - title: Find Your Rhythm
+      time: 04:40 - 09:50
+    - title: Breathe and Release
+      time: 09:50 - 15:30
+    - title: Return Refreshed
+      time: 15:30 - 21:00
   titleText: {fileID: 1334868774}
   durationText: {fileID: 1257103234}
   coverRenderer: {fileID: 152797150}
+  chapterManager: {fileID: 870838996}
   xrOrigin: {fileID: 728480471}
   xrCamera: {fileID: 1943136411}
   chapterTarget: {fileID: 713743140}
@@ -16789,6 +16888,21 @@ MonoBehaviour:
   _neighbourSideOffset: 1.6
   _neighbourYawAngle: 22
   _cardWorldY: 1.5
+--- !u!114 &1488076760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488076755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b0e16f0e102541138d9df2e2d58f07c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::XRCarouselSwipe
+  carousel: {fileID: 1488076759}
+  rightController: {fileID: 1040097898}
+  swipeThreshold: 0.15
 --- !u!1 &1488716778
 GameObject:
   m_ObjectHideFlags: 0
@@ -20404,11 +20518,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0b9e528a52674192b6baabb6ee36fbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorTeleport
-  doorController: {fileID: 1249170730}
-  xrOrigin: {fileID: 0}
-  xrCamera: {fileID: 0}
-  episodeTarget: {fileID: 0}
-  hasTeleported: 0
 --- !u!114 &1794807566
 MonoBehaviour:
   m_ObjectHideFlags: 0
