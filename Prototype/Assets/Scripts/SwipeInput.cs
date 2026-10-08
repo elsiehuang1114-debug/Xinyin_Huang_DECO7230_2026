@@ -1,35 +1,70 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Desktop swipe detector for the podcast carousel.
-/// Detects horizontal mouse drag and Left/Right arrow keys,
-/// then calls PodcastCarousel.Swipe().
-/// Uses Unity's new Input System.
-/// </summary>
 [RequireComponent(typeof(PodcastCarousel))]
 public class SwipeInput : MonoBehaviour
 {
-    [Header("Settings")]
-    [Tooltip("Minimum horizontal pixel drag distance to register a swipe.")]
-    [SerializeField] private float _swipeThresholdPixels = 60f;
+    // =====================================================
+    // DESKTOP SETTINGS
+    // =====================================================
 
-    private PodcastCarousel _carousel;
-    private bool _isDragging;
-    private float _dragStartX;
+    [Header("Desktop Swipe")]
+    [SerializeField]
+    private float swipeThresholdPixels = 60f;
+
+    // =====================================================
+    // QUEST 2 SETTINGS
+    // =====================================================
+
+    [Header("Quest 2 Controller")]
+
+    [Tooltip("右手手柄 Transform")]
+    [SerializeField]
+    private Transform rightController;
+
+    [Tooltip("右手 Trigger 输入")]
+    [SerializeField]
+    private InputActionReference triggerAction;
+
+    [Tooltip("手柄水平移动多少米才算一次滑动")]
+    [SerializeField]
+    private float xrSwipeThreshold = 0.15f;
+
+    // =====================================================
+    // INTERNAL STATE
+    // =====================================================
+
+    private PodcastCarousel carousel;
+
+    private bool isMouseDragging;
+    private float mouseStartX;
+
+    private bool isXRDragging;
+    private Vector3 xrStartPosition;
+
+    // =====================================================
+    // AWAKE
+    // =====================================================
 
     private void Awake()
     {
-        _carousel = GetComponent<PodcastCarousel>();
+        carousel = GetComponent<PodcastCarousel>();
     }
+
+    // =====================================================
+    // UPDATE
+    // =====================================================
 
     private void Update()
     {
         HandleArrowKeys();
         HandleMouseDrag();
+        HandleXRSwipe();
     }
 
-    // ── Keyboard ─────────────────────────────────────────────
+    // =====================================================
+    // DESKTOP: KEYBOARD
+    // =====================================================
 
     private void HandleArrowKeys()
     {
@@ -38,16 +73,18 @@ public class SwipeInput : MonoBehaviour
 
         if (Keyboard.current.rightArrowKey.wasPressedThisFrame)
         {
-            _carousel.Swipe(1); // next
+            carousel.Swipe(1);
         }
 
         if (Keyboard.current.leftArrowKey.wasPressedThisFrame)
         {
-            _carousel.Swipe(-1); // previous
+            carousel.Swipe(-1);
         }
     }
 
-    // ── Mouse ────────────────────────────────────────────────
+    // =====================================================
+    // DESKTOP: MOUSE
+    // =====================================================
 
     private void HandleMouseDrag()
     {
@@ -56,22 +93,85 @@ public class SwipeInput : MonoBehaviour
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            _dragStartX = Mouse.current.position.ReadValue().x;
-            _isDragging = true;
+            mouseStartX =
+                Mouse.current.position.ReadValue().x;
+
+            isMouseDragging = true;
         }
 
-        if (Mouse.current.leftButton.wasReleasedThisFrame && _isDragging)
+        if (Mouse.current.leftButton.wasReleasedThisFrame &&
+            isMouseDragging)
         {
-            _isDragging = false;
+            isMouseDragging = false;
 
-            float currentX = Mouse.current.position.ReadValue().x;
-            float delta = currentX - _dragStartX;
+            float delta =
+                Mouse.current.position.ReadValue().x
+                - mouseStartX;
 
-            if (Mathf.Abs(delta) >= _swipeThresholdPixels)
+            if (Mathf.Abs(delta) >= swipeThresholdPixels)
             {
-                // Swipe left → next
-                // Swipe right → previous
-                _carousel.Swipe(delta < 0f ? 1 : -1);
+                carousel.Swipe(delta < 0f ? 1 : -1);
+            }
+        }
+    }
+
+    // =====================================================
+    // QUEST 2: CONTROLLER SWIPE
+    // =====================================================
+
+    private void HandleXRSwipe()
+    {
+        if (rightController == null ||
+            triggerAction == null ||
+            triggerAction.action == null)
+        {
+            return;
+        }
+
+        // Trigger 按下时，记录手柄起点
+        if (triggerAction.action.WasPressedThisFrame())
+        {
+            xrStartPosition = rightController.position;
+            isXRDragging = true;
+        }
+
+        // Trigger 松开时，计算手柄移动距离
+        if (triggerAction.action.WasReleasedThisFrame() &&
+            isXRDragging)
+        {
+            isXRDragging = false;
+
+            Vector3 movement =
+                rightController.position - xrStartPosition;
+
+            // 使用玩家视角的右方向，
+            // 避免玩家转身后左右方向错误
+            Camera mainCamera = Camera.main;
+
+            Vector3 rightDirection =
+                mainCamera != null
+                ? mainCamera.transform.right
+                : Vector3.right;
+
+            rightDirection.y = 0f;
+            rightDirection.Normalize();
+
+            float horizontalMovement =
+                Vector3.Dot(movement, rightDirection);
+
+            if (Mathf.Abs(horizontalMovement) >=
+                xrSwipeThreshold)
+            {
+                // 向左 → 下一集
+                // 向右 → 上一集
+                carousel.Swipe(
+                    horizontalMovement < 0f ? 1 : -1
+                );
+
+                Debug.Log(
+                    "QUEST 2 SWIPE → " +
+                    horizontalMovement
+                );
             }
         }
     }
