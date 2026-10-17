@@ -12,23 +12,25 @@ public class SwipeInput : MonoBehaviour
     [SerializeField]
     private float swipeThresholdPixels = 60f;
 
+
     // =====================================================
     // QUEST 2 SETTINGS
     // =====================================================
 
-    [Header("Quest 2 Controller")]
+    [Header("Quest 2 Trigger Swipe")]
 
-    [Tooltip("右手手柄 Transform")]
+    [Tooltip("右手 Controller Transform")]
     [SerializeField]
     private Transform rightController;
 
-    [Tooltip("右手 Trigger 输入")]
+    [Tooltip("右手 Trigger Input Action")]
     [SerializeField]
     private InputActionReference triggerAction;
 
-    [Tooltip("手柄水平移动多少米才算一次滑动")]
+    [Tooltip("手柄水平移动多少米触发 Swipe")]
     [SerializeField]
-    private float xrSwipeThreshold = 0.15f;
+    private float xrSwipeThreshold = 0.05f;
+
 
     // =====================================================
     // INTERNAL STATE
@@ -39,8 +41,15 @@ public class SwipeInput : MonoBehaviour
     private bool isMouseDragging;
     private float mouseStartX;
 
-    private bool isXRDragging;
+    // Trigger 是否正在按住
+    private bool isXRDragging = false;
+
+    // 本次按住 Trigger 是否已经切换 Episode
+    private bool hasSwiped = false;
+
+    // 手柄起始位置
     private Vector3 xrStartPosition;
+
 
     // =====================================================
     // AWAKE
@@ -50,6 +59,7 @@ public class SwipeInput : MonoBehaviour
     {
         carousel = GetComponent<PodcastCarousel>();
     }
+
 
     // =====================================================
     // UPDATE
@@ -61,6 +71,7 @@ public class SwipeInput : MonoBehaviour
         HandleMouseDrag();
         HandleXRSwipe();
     }
+
 
     // =====================================================
     // DESKTOP: KEYBOARD
@@ -81,6 +92,7 @@ public class SwipeInput : MonoBehaviour
             carousel.Swipe(-1);
         }
     }
+
 
     // =====================================================
     // DESKTOP: MOUSE
@@ -115,8 +127,9 @@ public class SwipeInput : MonoBehaviour
         }
     }
 
+
     // =====================================================
-    // QUEST 2: CONTROLLER SWIPE
+    // QUEST 2: TRIGGER + HORIZONTAL MOVEMENT
     // =====================================================
 
     private void HandleXRSwipe()
@@ -128,30 +141,38 @@ public class SwipeInput : MonoBehaviour
             return;
         }
 
-        // Trigger 按下时，记录手柄起点
-        if (triggerAction.action.WasPressedThisFrame())
+        InputAction action = triggerAction.action;
+
+        // -------------------------------------------------
+        // Trigger 按下：开始记录手柄位置
+        // -------------------------------------------------
+
+        if (action.WasPressedThisFrame())
         {
             xrStartPosition = rightController.position;
+
             isXRDragging = true;
+            hasSwiped = false;
+
+            Debug.Log("QUEST SWIPE → TRIGGER PRESSED");
         }
 
-        // Trigger 松开时，计算手柄移动距离
-        if (triggerAction.action.WasReleasedThisFrame() &&
-            isXRDragging)
-        {
-            isXRDragging = false;
+        // -------------------------------------------------
+        // Trigger 按住：实时检测左右移动
+        // -------------------------------------------------
 
+        if (isXRDragging && !hasSwiped)
+        {
             Vector3 movement =
                 rightController.position - xrStartPosition;
 
-            // 使用玩家视角的右方向，
-            // 避免玩家转身后左右方向错误
+            // 根据玩家视角判断左右方向
             Camera mainCamera = Camera.main;
 
             Vector3 rightDirection =
                 mainCamera != null
-                ? mainCamera.transform.right
-                : Vector3.right;
+                    ? mainCamera.transform.right
+                    : Vector3.right;
 
             rightDirection.y = 0f;
             rightDirection.Normalize();
@@ -159,20 +180,36 @@ public class SwipeInput : MonoBehaviour
             float horizontalMovement =
                 Vector3.Dot(movement, rightDirection);
 
-            if (Mathf.Abs(horizontalMovement) >=
-                xrSwipeThreshold)
+            // 移动达到 5 cm，立即切换 Episode
+            if (Mathf.Abs(horizontalMovement) >= xrSwipeThreshold)
             {
-                // 向左 → 下一集
-                // 向右 → 上一集
+                // 左滑 → 下一集
+                // 右滑 → 上一集
+
                 carousel.Swipe(
                     horizontalMovement < 0f ? 1 : -1
                 );
 
+                // 本次按住 Trigger 只能切换一次
+                hasSwiped = true;
+
                 Debug.Log(
-                    "QUEST 2 SWIPE → " +
+                    "QUEST SWIPE → SUCCESS: " +
                     horizontalMovement
                 );
             }
+        }
+
+        // -------------------------------------------------
+        // Trigger 松开：重置状态
+        // -------------------------------------------------
+
+        if (action.WasReleasedThisFrame())
+        {
+            isXRDragging = false;
+            hasSwiped = false;
+
+            Debug.Log("QUEST SWIPE → TRIGGER RELEASED");
         }
     }
 }
